@@ -26,7 +26,7 @@ class CodeStore {
   }
 
   Future<Map<String, dynamic>> _loadDefaultCodes() async {
-    final jsonString = await rootBundle.loadString('lib/assets/default_codes.json');
+    final String jsonString = await rootBundle.loadString('assets/default_codes.json');
     final codes = json.decode(jsonString);
     await _writeCodes(codes);
     return codes;

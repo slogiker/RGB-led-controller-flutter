@@ -1,6 +1,5 @@
 
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:myapp/services/code_store.dart';
 import 'package:myapp/services/ir_service.dart';
 import 'package:myapp/ui/settings_screen.dart';
@@ -16,7 +15,6 @@ class RemoteScreen extends StatefulWidget {
 class _RemoteScreenState extends State<RemoteScreen> {
   final CodeStore _codeStore = CodeStore();
   Map<String, dynamic> _irCodes = {};
-  Color _currentColor = Colors.red;
 
   @override
   void initState() {
@@ -41,49 +39,22 @@ class _RemoteScreenState extends State<RemoteScreen> {
         msg: "Sent $buttonName",
         toastLength: Toast.LENGTH_SHORT,
         gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.grey[800],
+        textColor: Colors.white,
       );
     }
-  }
-
-  void _openColorPicker() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Pick a color'),
-          content: SingleChildScrollView(
-            child: ColorPicker(
-              pickerColor: _currentColor,
-              onColorChanged: (color) {
-                setState(() {
-                  _currentColor = color;
-                });
-              },
-              labelTypes: const [],
-              pickerAreaHeightPercent: 0.8,
-            ),
-          ),
-          actions: <Widget>[
-            ElevatedButton(
-              child: const Text('Done'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF212121),
       appBar: AppBar(
-        title: const Text('LED IR Controller'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings, color: Colors.orange),
             onPressed: () {
               Navigator.push(
                 context,
@@ -97,134 +68,220 @@ class _RemoteScreenState extends State<RemoteScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Top controls
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildCircularButton(Icons.brightness_low, Colors.grey, () => _transmit('BRIGHT_DOWN')),
-                _buildCircularButton(Icons.brightness_high, Colors.grey, () => _transmit('BRIGHT_UP')),
-                _buildPowerButton('OFF', Colors.black, () => _transmit('OFF')),
-                _buildPowerButton('ON', Colors.red, () => _transmit('ON')),
-              ],
-            ),
-            const SizedBox(height: 20),
-
-            // Color grid and effects
-            Expanded(
-              child: Row(
-                children: [
-                  Expanded(
-                    flex: 3,
-                    child: GridView.count(
-                      crossAxisCount: 4,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      children: [
-                        _buildColorButton('R', Colors.red, () => _transmit('R')),
-                        _buildColorButton('G', Colors.green, () => _transmit('G')),
-                        _buildColorButton('B', Colors.blue, () => _transmit('B')),
-                        _buildColorButton('W', Colors.white, () => _transmit('W')),
-                        _buildColorButton('C1', Colors.orange, () => _transmit('C1')),
-                        _buildColorButton('C2', Colors.lightGreen, () => _transmit('C2')),
-                        _buildColorButton('C3', Colors.lightBlue, () => _transmit('C3')),
-                        _buildColorButton('C4', Colors.pink, () => _transmit('C4')),
-                        _buildColorButton('C5', Colors.amber, () => _transmit('C5')),
-                        _buildColorButton('C6', Colors.cyan, () => _transmit('C6')),
-                        _buildColorButton('C7', Colors.purple, () => _transmit('C7')),
-                         GestureDetector(
-                          onTap: _openColorPicker,
-                          child: Container(
-                            margin: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(
-                              color: _currentColor,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Expanded(
-                    flex: 1,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        _buildEffectButton('FLASH', () => _transmit('FLASH')),
-                        _buildEffectButton('STROBE', () => _transmit('STROBE')),
-                        _buildEffectButton('FADE', () => _transmit('FADE')),
-                        _buildEffectButton('SMOOTH', () => _transmit('SMOOTH')),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      body: Center(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+          decoration: BoxDecoration(
+              color: const Color(0xFF4a4a4a),
+              borderRadius: BorderRadius.circular(25),
+              border: Border.all(color: Colors.black.withAlpha(51)),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withAlpha(128),
+                  spreadRadius: 5,
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                )
+              ]),
+          width: 300,
+          child: _buildRemoteGrid(),
         ),
       ),
     );
   }
 
-  Widget _buildCircularButton(IconData icon, Color color, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        shape: const CircleBorder(),
-        backgroundColor: color,
-        padding: const EdgeInsets.all(20),
-      ),
-      child: Icon(icon, color: Colors.white),
-    );
-  }
+  Widget _buildRemoteGrid() {
+    final List<Map<String, dynamic>> buttons = [
+      // Row 1
+      {
+        'child': Icon(Icons.wb_sunny_outlined, color: Colors.black.withAlpha(178)),
+        'color': Colors.white,
+        'name': 'BRIGHT_UP'
+      },
+      {
+        'child': Icon(Icons.wb_sunny, color: Colors.black.withAlpha(178)),
+        'color': Colors.white,
+        'name': 'BRIGHT_DOWN'
+      },
+      {'text': 'OFF', 'color': const Color(0xFF2d2d2d), 'name': 'OFF'},
+      {'text': 'ON', 'color': const Color(0xFFd93131), 'name': 'ON'},
+      // Row 2
+      {'text': 'R', 'color': const Color(0xFFd93131), 'name': 'R'},
+      {'text': 'G', 'color': const Color(0xFF31d931), 'name': 'G'},
+      {'text': 'B', 'color': const Color(0xFF3131d9), 'name': 'B'},
+      {
+        'text': 'W',
+        'color': Colors.white,
+        'textColor': Colors.black,
+        'name': 'W'
+      },
+      // Row 3
+      {'color': const Color(0xFFf47920), 'name': 'C1'},
+      {'color': const Color(0xFF00a651), 'name': 'C2'},
+      {'color': const Color(0xFF0072bc), 'name': 'C3'},
+      {
+        'text': 'FLASH',
+        'color': const Color(0xFF6e6e6e),
+        'textSize': 10.0,
+        'name': 'FLASH'
+      },
+      // Row 4
+      {'color': const Color(0xFFf4a261), 'name': 'C4'},
+      {'color': const Color(0xFF2a9d8f), 'name': 'C5'},
+      {'color': const Color(0xFF6a4c93), 'name': 'C6'},
+      {
+        'text': 'STROBE',
+        'color': const Color(0xFF6e6e6e),
+        'textSize': 10.0,
+        'name': 'STROBE'
+      },
+      // Row 5
+      {'color': const Color(0xFFf9c74f), 'name': 'C7'},
+      {'color': const Color(0xFF277da1), 'name': 'C8'},
+      {'color': const Color(0xFFe5989b), 'name': 'C9'},
+      {
+        'text': 'FADE',
+        'color': const Color(0xFF6e6e6e),
+        'textSize': 10.0,
+        'name': 'FADE'
+      },
+      // Row 6
+      {'color': const Color(0xFFf4e285), 'name': 'C10'},
+      {'color': const Color(0xFF83c5be), 'name': 'C11'},
+      {'color': const Color(0xFFe07a5f), 'name': 'C12'},
+      {
+        'text': 'SMOOTH',
+        'color': const Color(0xFF6e6e6e),
+        'textSize': 10.0,
+        'name': 'SMOOTH'
+      },
+    ];
 
-  Widget _buildPowerButton(String text, Color color, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+    return GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: buttons.length,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 4,
+            mainAxisSpacing: 15,
+            crossAxisSpacing: 15
         ),
-        backgroundColor: color,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-      ),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        itemBuilder: (context, index) {
+          final buttonConfig = buttons[index];
+          return _RemoteButton(
+            color: buttonConfig['color'],
+            text: buttonConfig['text'],
+            textColor: buttonConfig['textColor'],
+            child: buttonConfig['child'],
+            onPressed: () => _transmit(buttonConfig['name']),
+            size: 50,
+            textSize: buttonConfig['textSize'] ?? 16.0,
+          );
+        });
+  }
+}
+
+class _RemoteButton extends StatefulWidget {
+  final Color? color;
+  final String? text;
+  final Color? textColor;
+  final Widget? child;
+  final VoidCallback? onPressed;
+  final double size;
+  final double textSize;
+
+  const _RemoteButton({
+    this.color,
+    this.text,
+    this.textColor,
+    this.child,
+    this.onPressed,
+    this.size = 50.0,
+    this.textSize = 16.0,
+  });
+
+  @override
+  _RemoteButtonState createState() => _RemoteButtonState();
+}
+
+class _RemoteButtonState extends State<_RemoteButton> with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      reverseDuration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
     );
   }
 
-  Widget _buildColorButton(String text, Color color, VoidCallback onPressed) {
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    if (widget.onPressed != null) {
+      widget.onPressed!();
+      _controller.forward().then((_) {
+        _controller.reverse();
+      });
+    }
+  }
+
+  Color _getSlightlyLighter(Color color) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl.withLightness((hsl.lightness + 0.05).clamp(0.0, 1.0)).toColor();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final buttonColor = widget.color ?? const Color(0xFF6e6e6e);
     return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      onTap: _handleTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
+        child: Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            color: buttonColor,
+            shape: BoxShape.circle,
+            gradient: RadialGradient(
+              colors: [_getSlightlyLighter(buttonColor), buttonColor],
+              center: Alignment.center,
+              radius: 0.7,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(102),
+                blurRadius: 4,
+                offset: const Offset(2, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: widget.child ??
+                (widget.text != null
+                    ? Text(
+                        widget.text!,
+                        style: TextStyle(
+                          color: widget.textColor ?? Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: widget.textSize,
+                        ),
+                      )
+                    : null),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildEffectButton(String text, VoidCallback onPressed) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-        backgroundColor: Colors.grey[300],
-        padding: const EdgeInsets.symmetric(vertical: 15),
-      ),
-      child: Text(text, style: const TextStyle(color: Colors.black)),
     );
   }
 }

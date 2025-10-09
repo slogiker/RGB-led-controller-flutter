@@ -18,7 +18,7 @@ class MyApp extends StatefulWidget {
 }
 
 class MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.system;
+  ThemeMode _themeMode = ThemeMode.dark;
   ThemeMode get themeMode => _themeMode;
 
   @override
@@ -65,7 +65,7 @@ class MyAppState extends State<MyApp> {
       darkTheme: ThemeData(
         brightness: Brightness.dark,
         primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFF101316),
+        scaffoldBackgroundColor: const Color(0xFF212121),
         cardColor: const Color(0xFF3A3C40),
       ),
       themeMode: _themeMode,
