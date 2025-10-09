@@ -1,0 +1,32 @@
+{
+    "meta": {
+        "name": "Generic LED Strip",
+        "frequency": 38000
+    },
+    "buttons": {
+        "ON": "0xFFA25D",
+        "OFF": "0xFFE21D",
+        "BRIGHT_UP": "0xFF22DD",
+        "BRIGHT_DOWN": "0xFF02FD",
+        "R": "0xFF1AE5",
+        "G": "0xFF9A65",
+        "B": "0xFFA857",
+        "W": "0xFFE01F",
+        "C1": "0xFF906F",
+        "C2": "0xFFB04F",
+        "C3": "0xFFF807",
+        "C4": "0xFFB847",
+        "C5": "0xFFD827",
+        "C6": "0xFFF00F",
+        "C7": "0xFF9867",
+        "C8": "0xFFD02F",
+        "C9": "0xFF8877",
+        "C10": "0xFFA05F",
+        "C11": "0xFFE817",
+        "C12": "0xFFC837",
+        "FLASH": "0xFFC23D",
+        "STROBE": "0xFF2AD5",
+        "FADE": "0xFF6A95",
+        "SMOOTH": "0xFF4AB5"
+    }
+}
