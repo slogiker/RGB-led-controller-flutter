@@ -1,9 +1,26 @@
-
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:myapp/ui/remote_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await Firebase.initializeApp(
+      options: const FirebaseOptions(
+        apiKey: "AIzaSyC-3prgVuu6QXjXZqkBGeAAEeWH9tpICoI",
+        authDomain: "rgb-led-controller-flutter.firebaseapp.com",
+        projectId: "rgb-led-controller-flutter",
+        storageBucket: "rgb-led-controller-flutter.firebasestorage.app",
+        messagingSenderId: "358704228013",
+        appId: "1:358704228013:web:810274f785fd3a4bde4824",
+      ),
+    );
+  } else {
+    await Firebase.initializeApp();
+  }
   runApp(const MyApp());
 }
 

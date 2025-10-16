@@ -7,6 +7,8 @@ import 'package:myapp/main.dart';
 import 'package:myapp/services/code_store.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:myapp/services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   final VoidCallback onCodesUpdated;
@@ -18,6 +20,18 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final AuthService _authService = AuthService();
+  User? _user;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _authService.userChanges.listen((user) {
+      setState(() {
+        _user = user;
+      });
+    });
+  }
   final CodeStore _codeStore = CodeStore();
   int _codeCount = 0;
   String _lastUpdated = 'Never';
@@ -83,6 +97,50 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
+          ListTile(
+            title: Text(_user == null
+                ? 'Not logged in'
+                : 'Logged in as: \\${_user!.isAnonymous ? 'Anonymous' : (_user!.email ?? _user!.displayName ?? 'User')}'),
+            subtitle: _user == null
+                ? null
+                : Text(_user!.uid),
+          ),
+          if (_user == null) ...[
+            ListTile(
+              title: const Text('Sign in with Google'),
+              onTap: () async {
+                try {
+                  await _authService.signInWithGoogle();
+                } catch (e) {
+                  Fluttertoast.showToast(msg: 'Google sign-in failed: \\${e.toString()}');
+                }
+              },
+            ),
+            ListTile(
+              title: const Text('Sign in with Email'),
+              onTap: () async {
+                // TODO: Show dialog for email/password input and call signInWithEmail
+                Fluttertoast.showToast(msg: 'Email sign-in not implemented');
+              },
+            ),
+            ListTile(
+              title: const Text('Continue as Guest (Anonymous)'),
+              onTap: () async {
+                try {
+                  await _authService.signInAnonymously();
+                } catch (e) {
+                  Fluttertoast.showToast(msg: 'Anonymous sign-in failed: \\${e.toString()}');
+                }
+              },
+            ),
+          ] else ...[
+            ListTile(
+              title: const Text('Sign out'),
+              onTap: () async {
+                await _authService.signOut();
+              },
+            ),
+          ],
           SwitchListTile(
             title: const Text('Vibrate on Button Press'),
             value: _vibrateOnButton,

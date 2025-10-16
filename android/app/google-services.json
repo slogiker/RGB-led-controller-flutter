@@ -1,0 +1,29 @@
+      {
+  "project_info": {
+    "project_number": "358704228013",
+    "project_id": "rgb-led-controller-flutter",
+    "storage_bucket": "rgb-led-controller-flutter.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:358704228013:android:6758cc152ea39216de4824",
+        "android_client_info": {
+          "package_name": "RGB.Controller.flutter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCTsSWvIlFAOBCQTuo4fLShjjr8-K7AdQU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
