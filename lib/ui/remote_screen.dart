@@ -4,6 +4,9 @@ import 'package:myapp/services/code_store.dart';
 import 'package:myapp/services/ir_service.dart';
 import 'package:myapp/ui/settings_screen.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:flutter/foundation.dart';
+import 'package:vibration/vibration.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RemoteScreen extends StatefulWidget {
   const RemoteScreen({super.key});
@@ -16,10 +19,20 @@ class _RemoteScreenState extends State<RemoteScreen> {
   final CodeStore _codeStore = CodeStore();
   Map<String, dynamic> _irCodes = {};
 
+  bool _vibrateOnButton = true;
+
   @override
   void initState() {
     super.initState();
     _loadCodes();
+    _loadVibrateSetting();
+  }
+
+  Future<void> _loadVibrateSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _vibrateOnButton = prefs.getBool('vibrateOnButton') ?? true;
+    });
   }
 
   Future<void> _loadCodes() async {
@@ -29,7 +42,7 @@ class _RemoteScreenState extends State<RemoteScreen> {
     });
   }
 
-  void _transmit(String buttonName) {
+  Future<void> _transmit(String buttonName) async {
     if (_irCodes.containsKey('buttons') &&
         _irCodes['buttons'].containsKey(buttonName)) {
       final hexCode = _irCodes['buttons'][buttonName];
@@ -42,6 +55,15 @@ class _RemoteScreenState extends State<RemoteScreen> {
         backgroundColor: Colors.grey[800],
         textColor: Colors.white,
       );
+      if (kIsWeb) {
+        // For web, print button name to console
+        // ignore: avoid_print
+        print('Button pressed: $buttonName');
+      } else if (_vibrateOnButton) {
+        if (await Vibration.hasVibrator() ?? false) {
+          Vibration.vibrate(duration: 50);
+        }
+      }
     }
   }
 

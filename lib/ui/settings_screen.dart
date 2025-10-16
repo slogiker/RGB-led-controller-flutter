@@ -21,11 +21,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final CodeStore _codeStore = CodeStore();
   int _codeCount = 0;
   String _lastUpdated = 'Never';
+  bool _vibrateOnButton = true;
 
   @override
   void initState() {
     super.initState();
     _loadCodeInfo();
+  _loadVibrateSetting();
   }
 
   Future<void> _loadCodeInfo() async {
@@ -34,6 +36,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {
       _codeCount = codes.containsKey('buttons') ? codes['buttons'].length : 0;
       _lastUpdated = prefs.getString('lastUpdated') ?? 'Never';
+    });
+  }
+
+  Future<void> _loadVibrateSetting() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _vibrateOnButton = prefs.getBool('vibrateOnButton') ?? true;
+    });
+  }
+
+  Future<void> _setVibrateSetting(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('vibrateOnButton', value);
+    setState(() {
+      _vibrateOnButton = value;
     });
   }
 
@@ -66,6 +83,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
+          SwitchListTile(
+            title: const Text('Vibrate on Button Press'),
+            value: _vibrateOnButton,
+            onChanged: (value) {
+              _setVibrateSetting(value);
+            },
+          ),
           ListTile(
             title: const Text('Theme'),
             trailing: DropdownButton<ThemeMode>(
