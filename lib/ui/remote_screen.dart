@@ -1,12 +1,9 @@
-
 import 'package:flutter/material.dart';
-import 'package:myapp/services/code_store.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:myapp/services/ir_service.dart';
 import 'package:myapp/ui/settings_screen.dart';
-import 'package:fluttertoast/fluttertoast.dart';
-import 'package:flutter/foundation.dart';
-import 'package:vibration/vibration.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class RemoteScreen extends StatefulWidget {
   const RemoteScreen({super.key});
@@ -16,293 +13,254 @@ class RemoteScreen extends StatefulWidget {
 }
 
 class _RemoteScreenState extends State<RemoteScreen> {
-  final CodeStore _codeStore = CodeStore();
-  Map<String, dynamic> _irCodes = {};
-
-  bool _vibrateOnButton = true;
+  Map<String, String> _irCodes = {};
 
   @override
   void initState() {
     super.initState();
-    _loadCodes();
-    _loadVibrateSetting();
+    _loadIrCodes();
   }
 
-  Future<void> _loadVibrateSetting() async {
-    final prefs = await SharedPreferences.getInstance();
+  Future<void> _loadIrCodes() async {
+    final String response = await rootBundle.loadString('assets/ir_codes.json');
+    final data = await json.decode(response);
     setState(() {
-      _vibrateOnButton = prefs.getBool('vibrateOnButton') ?? true;
+      _irCodes = Map<String, String>.from(data);
     });
   }
 
-  Future<void> _loadCodes() async {
-    final codes = await _codeStore.readCodes();
-    setState(() {
-      _irCodes = codes;
-    });
-  }
-
-  Future<void> _transmit(String buttonName) async {
-    if (_irCodes.containsKey('buttons') &&
-        _irCodes['buttons'].containsKey(buttonName)) {
-      final hexCode = _irCodes['buttons'][buttonName];
-      final frequency = _irCodes['meta']['frequency'];
-      IrService.transmitHex(hexCode, frequency);
-      Fluttertoast.showToast(
-        msg: "Sent $buttonName",
-        toastLength: Toast.LENGTH_SHORT,
-        gravity: ToastGravity.BOTTOM,
-        backgroundColor: Colors.grey[800],
-        textColor: Colors.white,
-      );
-      if (kIsWeb) {
-        // For web, print button name to console
-        // ignore: avoid_print
-        print('Button pressed: $buttonName');
-      } else if (_vibrateOnButton) {
-        if (await Vibration.hasVibrator() ?? false) {
-          Vibration.vibrate(duration: 50);
-        }
-      }
+  void _sendIrCommand(String key) {
+    final code = _irCodes[key];
+    if (code != null) {
+      IrService.transmitIR(code);
+      HapticFeedback.lightImpact();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF212121),
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+        title: Text(
+          'RGB LED Remote',
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings, color: Colors.orange),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => SettingsScreen(
-                    onCodesUpdated: _loadCodes,
-                  ),
-                ),
+                MaterialPageRoute(builder: (context) => SettingsScreen(onCodesUpdated: _loadIrCodes)),
               );
             },
           ),
         ],
       ),
-      body: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 30),
-          decoration: BoxDecoration(
-              color: const Color(0xFF4a4a4a),
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: Colors.black.withAlpha(51)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(128),
-                  spreadRadius: 5,
-                  blurRadius: 15,
-                  offset: const Offset(0, 5),
-                )
-              ]),
-          width: 300,
-          child: _buildRemoteGrid(),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage("assets/images/noise.png"),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(Colors.black.withAlpha(25), BlendMode.dstATop),
+          ),
+          gradient: LinearGradient(
+            colors: [Colors.deepPurple.shade900, Colors.blue.shade900],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildPowerButtons(),
+              _buildColorGrid(),
+              _buildBrightnessSlider(),
+              _buildSpeedSlider(),
+              _buildEffectButtons(),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildRemoteGrid() {
-    final List<Map<String, dynamic>> buttons = [
-      // Row 1
-      {
-        'child': Icon(Icons.wb_sunny_outlined, color: Colors.black.withAlpha(178)),
-        'color': Colors.white,
-        'name': 'BRIGHT_UP'
-      },
-      {
-        'child': Icon(Icons.wb_sunny, color: Colors.black.withAlpha(178)),
-        'color': Colors.white,
-        'name': 'BRIGHT_DOWN'
-      },
-      {'text': 'OFF', 'color': const Color(0xFF2d2d2d), 'name': 'OFF'},
-      {'text': 'ON', 'color': const Color(0xFFd93131), 'name': 'ON'},
-      // Row 2
-      {'text': 'R', 'color': const Color(0xFFd93131), 'name': 'R'},
-      {'text': 'G', 'color': const Color(0xFF31d931), 'name': 'G'},
-      {'text': 'B', 'color': const Color(0xFF3131d9), 'name': 'B'},
-      {
-        'text': 'W',
-        'color': Colors.white,
-        'textColor': Colors.black,
-        'name': 'W'
-      },
-      // Row 3
-      {'color': const Color(0xFFf47920), 'name': 'C1'},
-      {'color': const Color(0xFF00a651), 'name': 'C2'},
-      {'color': const Color(0xFF0072bc), 'name': 'C3'},
-      {
-        'text': 'FLASH',
-        'color': const Color(0xFF6e6e6e),
-        'textSize': 10.0,
-        'name': 'FLASH'
-      },
-      // Row 4
-      {'color': const Color(0xFFf4a261), 'name': 'C4'},
-      {'color': const Color(0xFF2a9d8f), 'name': 'C5'},
-      {'color': const Color(0xFF6a4c93), 'name': 'C6'},
-      {
-        'text': 'STROBE',
-        'color': const Color(0xFF6e6e6e),
-        'textSize': 10.0,
-        'name': 'STROBE'
-      },
-      // Row 5
-      {'color': const Color(0xFFf9c74f), 'name': 'C7'},
-      {'color': const Color(0xFF277da1), 'name': 'C8'},
-      {'color': const Color(0xFFe5989b), 'name': 'C9'},
-      {
-        'text': 'FADE',
-        'color': const Color(0xFF6e6e6e),
-        'textSize': 10.0,
-        'name': 'FADE'
-      },
-      // Row 6
-      {'color': const Color(0xFFf4e285), 'name': 'C10'},
-      {'color': const Color(0xFF83c5be), 'name': 'C11'},
-      {'color': const Color(0xFFe07a5f), 'name': 'C12'},
-      {
-        'text': 'SMOOTH',
-        'color': const Color(0xFF6e6e6e),
-        'textSize': 10.0,
-        'name': 'SMOOTH'
-      },
+  Widget _buildPowerButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: [
+        _buildIconButton(Icons.power_settings_new, Colors.greenAccent, 'power_on'),
+        _buildIconButton(Icons.power_off, Colors.redAccent, 'power_off'),
+      ],
+    );
+  }
+
+  Widget _buildColorGrid() {
+    final List<Map<String, dynamic>> colors = [
+      {'color': Colors.red, 'key': 'red'},
+      {'color': Colors.green, 'key': 'green'},
+      {'color': Colors.blue, 'key': 'blue'},
+      {'color': Colors.white, 'key': 'white'},
+      {'color': Colors.orange, 'key': 'orange'},
+      {'color': Colors.lightGreen, 'key': 'light_green'},
+      {'color': Colors.lightBlue, 'key': 'light_blue'},
+      {'color': Colors.amber, 'key': 'amber'},
+      {'color': Colors.cyan, 'key': 'cyan'},
+      {'color': Colors.purple, 'key': 'purple'},
+      {'color': Colors.yellow, 'key': 'yellow'},
+      {'color': Colors.pink, 'key': 'pink'},
     ];
 
     return GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        itemCount: buttons.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4,
-            mainAxisSpacing: 15,
-            crossAxisSpacing: 15
-        ),
-        itemBuilder: (context, index) {
-          final buttonConfig = buttons[index];
-          return _RemoteButton(
-            color: buttonConfig['color'],
-            text: buttonConfig['text'],
-            textColor: buttonConfig['textColor'],
-            child: buttonConfig['child'],
-            onPressed: () => _transmit(buttonConfig['name']),
-            size: 50,
-            textSize: buttonConfig['textSize'] ?? 16.0,
-          );
-        });
-  }
-}
-
-class _RemoteButton extends StatefulWidget {
-  final Color? color;
-  final String? text;
-  final Color? textColor;
-  final Widget? child;
-  final VoidCallback? onPressed;
-  final double size;
-  final double textSize;
-
-  const _RemoteButton({
-    this.color,
-    this.text,
-    this.textColor,
-    this.child,
-    this.onPressed,
-    this.size = 50.0,
-    this.textSize = 16.0,
-  });
-
-  @override
-  _RemoteButtonState createState() => _RemoteButtonState();
-}
-
-class _RemoteButtonState extends State<_RemoteButton> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 100),
-      reverseDuration: const Duration(milliseconds: 100),
-    );
-    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.9).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisSpacing: 15,
+        crossAxisSpacing: 15,
+      ),
+      itemCount: colors.length,
+      itemBuilder: (context, index) {
+        final color = colors[index]['color'] as Color;
+        final key = colors[index]['key'] as String;
+        return _buildColorButton(color, key);
+      },
     );
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Widget _buildBrightnessSlider() {
+    return _buildSlider('Brightness', Icons.wb_sunny, 'brightness_down', 'brightness_up');
   }
 
-  void _handleTap() {
-    if (widget.onPressed != null) {
-      widget.onPressed!();
-      _controller.forward().then((_) {
-        _controller.reverse();
-      });
-    }
+  Widget _buildSpeedSlider() {
+    return _buildSlider('Speed', Icons.speed, 'smooth', 'flash'); // Using smooth/flash as placeholders
   }
 
-  Color _getSlightlyLighter(Color color) {
-    final hsl = HSLColor.fromColor(color);
-    return hsl.withLightness((hsl.lightness + 0.05).clamp(0.0, 1.0)).toColor();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final buttonColor = widget.color ?? const Color(0xFF6e6e6e);
-    return GestureDetector(
-      onTap: _handleTap,
-      child: ScaleTransition(
-        scale: _scaleAnimation,
-        child: Container(
-          width: widget.size,
-          height: widget.size,
-          decoration: BoxDecoration(
-            color: buttonColor,
-            shape: BoxShape.circle,
-            gradient: RadialGradient(
-              colors: [_getSlightlyLighter(buttonColor), buttonColor],
-              center: Alignment.center,
-              radius: 0.7,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withAlpha(102),
-                blurRadius: 4,
-                offset: const Offset(2, 2),
+  Widget _buildSlider(String label, IconData icon, String keyDecrease, String keyIncrease) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: GoogleFonts.roboto(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            _buildSmallIconButton(icon, keyDecrease),
+            const Expanded(
+              child: Slider(
+                value: 0.5, // Dummy value
+                onChanged: null, // Disabled
+                activeColor: Colors.purpleAccent,
+                inactiveColor: Colors.grey,
               ),
-            ],
-          ),
-          child: Center(
-            child: widget.child ??
-                (widget.text != null
-                    ? Text(
-                        widget.text!,
-                        style: TextStyle(
-                          color: widget.textColor ?? Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: widget.textSize,
-                        ),
-                      )
-                    : null),
-          ),
+            ),
+            _buildSmallIconButton(icon, keyIncrease, increment: true),
+          ],
         ),
+      ],
+    );
+  }
+
+  Widget _buildEffectButtons() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _buildTextButton('Flash', 'flash'),
+        _buildTextButton('Strobe', 'strobe'),
+        _buildTextButton('Fade', 'fade'),
+        _buildTextButton('Smooth', 'smooth'),
+      ],
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, Color color, String key) {
+    return InkWell(
+      onTap: () => _sendIrCommand(key),
+      borderRadius: BorderRadius.circular(50),
+      child: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withAlpha(50),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.deepPurple.shade900.withAlpha(128),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: const Offset(5, 5)),
+            BoxShadow(
+                color: Colors.blue.shade900.withAlpha(128),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: const Offset(-5, -5)),
+          ],
+        ),
+        child: Icon(icon, color: color, size: 35),
+      ),
+    );
+  }
+
+  Widget _buildSmallIconButton(IconData icon, String key, {bool increment = false}) {
+    return InkWell(
+      onTap: () => _sendIrCommand(key),
+      borderRadius: BorderRadius.circular(30),
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: Colors.black.withAlpha(50),
+        ),
+        child: Icon(increment ? Icons.add : Icons.remove, color: Colors.white, size: 20),
+      ),
+    );
+  }
+
+  Widget _buildColorButton(Color color, String key) {
+    return InkWell(
+      onTap: () => _sendIrCommand(key),
+      borderRadius: BorderRadius.circular(15),
+      child: Container(
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(128),
+              spreadRadius: 1,
+              blurRadius: 8,
+              offset: const Offset(4, 4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextButton(String label, String key) {
+    return InkWell(
+      onTap: () => _sendIrCommand(key),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.black.withAlpha(50),
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+             BoxShadow(
+                color: Colors.deepPurple.shade900.withAlpha(128),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(3, 3)),
+             BoxShadow(
+                color: Colors.blue.shade900.withAlpha(128),
+                spreadRadius: 1,
+                blurRadius: 5,
+                offset: const Offset(-3, -3)),
+          ],
+        ),
+        child: Text(label, style: GoogleFonts.roboto(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
       ),
     );
   }

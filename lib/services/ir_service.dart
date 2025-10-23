@@ -1,18 +1,16 @@
-
-import 'dart:developer' as developer;
 import 'package:flutter/services.dart';
+import 'dart:developer' as developer;
 
 class IrService {
-  static const _channel = MethodChannel('ir_channel');
+  static const MethodChannel _channel = MethodChannel('ir_service');
 
-  static Future<void> transmitHex(String hexCode, int frequency) async {
+  static Future<bool> transmitIR(String code) async {
     try {
-      await _channel.invokeMethod('transmitHex', {
-        'hexCode': hexCode,
-        'frequency': frequency,
-      });
+      final bool result = await _channel.invokeMethod('transmitIR', {'code': code});
+      return result;
     } on PlatformException catch (e) {
-      developer.log("Failed to transmit IR code: '${e.message}'.");
+      developer.log("Failed to transmit IR: '${e.message}'.");
+      return false;
     }
   }
 }

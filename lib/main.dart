@@ -1,92 +1,76 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:myapp/ui/remote_screen.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:provider/provider.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyC-3prgVuu6QXjXZqkBGeAAEeWH9tpICoI",
-        authDomain: "rgb-led-controller-flutter.firebaseapp.com",
-        projectId: "rgb-led-controller-flutter",
-        storageBucket: "rgb-led-controller-flutter.firebasestorage.app",
-        messagingSenderId: "358704228013",
-        appId: "1:358704228013:web:810274f785fd3a4bde4824",
-      ),
-    );
-  } else {
-    await Firebase.initializeApp();
-  }
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => ThemeProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
-class MyApp extends StatefulWidget {
+class ThemeProvider with ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  ThemeMode get themeMode => _themeMode;
+
+  void setThemeMode(ThemeMode mode) {
+    _themeMode = mode;
+    notifyListeners();
+  }
+}
+
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
-  State<MyApp> createState() => MyAppState();
-
-  static MyAppState of(BuildContext context) =>
-      context.findAncestorStateOfType<MyAppState>()!;
-}
-
-class MyAppState extends State<MyApp> {
-  ThemeMode _themeMode = ThemeMode.dark;
-  ThemeMode get themeMode => _themeMode;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadThemeMode();
-  }
-
-  void _loadThemeMode() async {
-    final prefs = await SharedPreferences.getInstance();
-    final theme = prefs.getString('themeMode');
-    if (theme == 'light') {
-      setState(() {
-        _themeMode = ThemeMode.light;
-      });
-    } else if (theme == 'dark') {
-      setState(() {
-        _themeMode = ThemeMode.dark;
-      });
-    }
-  }
-
-  void changeTheme(ThemeMode themeMode) {
-    setState(() {
-      _themeMode = themeMode;
-    });
-    _saveThemeMode(themeMode);
-  }
-
-  void _saveThemeMode(ThemeMode themeMode) async {
-    final prefs = await SharedPreferences.getInstance();
-    prefs.setString('themeMode', themeMode.toString().split('.').last);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LED IR Controller',
-      theme: ThemeData(
+    final textTheme = Theme.of(context).textTheme;
+
+    final lightTheme = ThemeData(
+        useMaterial3: true,
         brightness: Brightness.light,
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
+        primaryColor: Colors.deepPurple,
+        scaffoldBackgroundColor: Colors.grey.shade200,
+        textTheme: GoogleFonts.robotoTextTheme(textTheme).apply(bodyColor: Colors.black),
+        appBarTheme: AppBarTheme(
+            titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black),
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            centerTitle: true,
+            iconTheme: const IconThemeData(color: Colors.black)),
+      );
+
+    final darkTheme = ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      primaryColor: Colors.deepPurpleAccent,
+      scaffoldBackgroundColor: const Color(0xFF121212),
+      textTheme: GoogleFonts.robotoTextTheme(textTheme).apply(bodyColor: Colors.white),
+      appBarTheme: AppBarTheme(
+        titleTextStyle: GoogleFonts.oswald(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      darkTheme: ThemeData(
-        brightness: Brightness.dark,
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: const Color(0xFF212121),
-        cardColor: const Color(0xFF3A3C40),
-      ),
-      themeMode: _themeMode,
-      home: const RemoteScreen(),
+    );
+
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'RGB LED Remote',
+          theme: lightTheme,
+          darkTheme: darkTheme,
+          themeMode: themeProvider.themeMode,
+          home: const RemoteScreen(),
+          debugShowCheckedModeBanner: false,
+        );
+      },
     );
   }
 }

@@ -1,0 +1,23 @@
+
+{
+  "power_on": "0x00FFB04F",
+  "power_off": "0x00FF7A85",
+  "brightness_up": "0x00FFAA55",
+  "brightness_down": "0x00FF926D",
+  "red": "0x00FF9A65",
+  "green": "0x00FF5AA5",
+  "blue": "0x00FFD22D",
+  "white": "0x00FFBA45",
+  "orange": "0x00FFB24D",
+  "light_green": "0x00FF728D",
+  "light_blue": "0x00FFF20D",
+  "amber": "0x00FF827D",
+  "cyan": "0x00FF629D",
+  "purple": "0x00FFE21D",
+  "yellow": "0x00FFC23D",
+  "pink": "0x00FFA25D",
+  "flash": "0x00FFB847",
+  "strobe": "0x00FF7887",
+  "fade": "0x00FF58A7",
+  "smooth": "0x00FFD827"
+}
