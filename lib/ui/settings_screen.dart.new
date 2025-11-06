@@ -1,15 +1,7 @@
-
 import 'package:flutter/material.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  @override
-  State<SettingsScreen> createState() => _SettingsScreenState();
-}
-
-class _SettingsScreenState extends State<SettingsScreen> {
-  bool _vibrationEnabled = true;
 
   @override
   Widget build(BuildContext context) {
@@ -19,15 +11,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       body: ListView(
         children: [
-          SwitchListTile(
+          ListTile(
             title: const Text('Vibration'),
-            value: _vibrationEnabled,
-            onChanged: (bool value) {
-              setState(() {
-                _vibrationEnabled = value;
-              });
-              // TODO: Save vibration setting
-            },
+            trailing: Switch(
+              value: true, // TODO: Implement settings storage
+              onChanged: (bool value) {
+                // TODO: Implement vibration settings
+              },
+            ),
           ),
           const Divider(),
           ListTile(

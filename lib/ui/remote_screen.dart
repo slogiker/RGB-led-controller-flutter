@@ -1,266 +1,273 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:myapp/services/ir_service.dart';
 import 'package:myapp/ui/settings_screen.dart';
 
-class RemoteScreen extends StatefulWidget {
+class RemoteScreen extends StatelessWidget {
   const RemoteScreen({super.key});
 
-  @override
-  State<RemoteScreen> createState() => _RemoteScreenState();
-}
-
-class _RemoteScreenState extends State<RemoteScreen> {
-  Map<String, String> _irCodes = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _loadIrCodes();
-  }
-
-  Future<void> _loadIrCodes() async {
-    final String response = await rootBundle.loadString('assets/ir_codes.json');
-    final data = await json.decode(response);
-    setState(() {
-      _irCodes = Map<String, String>.from(data);
-    });
-  }
-
-  void _sendIrCommand(String key) {
-    final code = _irCodes[key];
-    if (code != null) {
-      IrService.transmitIR(code);
-      HapticFeedback.lightImpact();
-    }
+  void _sendIrCommand(String command) {
+    IrService.transmitIR(command);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'RGB LED Remote',
-        ),
+        title: const Text('RGB LED Remote'),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SettingsScreen(onCodesUpdated: _loadIrCodes)),
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
               );
             },
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: const AssetImage("assets/images/noise.png"),
-            fit: BoxFit.cover,
-            colorFilter: ColorFilter.mode(Colors.black.withAlpha(25), BlendMode.dstATop),
-          ),
-          gradient: LinearGradient(
-            colors: [Colors.deepPurple.shade900, Colors.blue.shade900],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildPowerButtons(),
-              _buildColorGrid(),
-              _buildBrightnessSlider(),
-              _buildSpeedSlider(),
-              _buildEffectButtons(),
+      body: Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0),
+          constraints: const BoxConstraints(maxWidth: 400),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A1A1A),
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(
+              color: Colors.grey.shade800,
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
             ],
           ),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                _buildControlRow([
+                  {'icon': Icons.add, 'command': 'BRIGHT_UP'},
+                  {'icon': Icons.remove, 'command': 'BRIGHT_DOWN'},
+                  {'icon': Icons.power_settings_new, 'command': 'OFF', 'color': Colors.red},
+                  {'icon': Icons.power_settings_new, 'command': 'ON', 'color': Colors.green},
+                ]),
+                const SizedBox(height: 24),
+                _buildColorRow([
+                  {'color': Colors.red, 'command': 'RED'},
+                  {'color': Colors.green, 'command': 'GREEN'},
+                  {'color': Colors.blue, 'command': 'BLUE'},
+                  {'color': Colors.white, 'command': 'WHITE'},
+                ]),
+                const SizedBox(height: 16),
+                _buildColorRow([
+                  {'color': Colors.orange, 'command': 'ORANGE'},
+                  {'color': Colors.cyan.shade300, 'command': 'TURQUOISE'},
+                  {'color': Colors.purple, 'command': 'PURPLE'},
+                  {'text': 'FLASH', 'command': 'FLASH'},
+                ]),
+                const SizedBox(height: 16),
+                _buildColorRow([
+                  {'color': Colors.orange.shade300, 'command': 'YELLOW_ORANGE'},
+                  {'color': Colors.cyan.shade200, 'command': 'LIGHT_TURQUOISE'},
+                  {'color': Colors.purple.shade200, 'command': 'LIGHT_PURPLE'},
+                  {'text': 'STROBE', 'command': 'STROBE'},
+                ]),
+                const SizedBox(height: 16),
+                _buildColorRow([
+                  {'color': Colors.yellow.shade600, 'command': 'YELLOW_ORANGE'},
+                  {'color': Colors.cyan, 'command': 'CYAN'},
+                  {'color': Colors.pink.shade300, 'command': 'PINK'},
+                  {'text': 'FADE', 'command': 'FADE'},
+                ]),
+                const SizedBox(height: 16),
+                _buildColorRow([
+                  {'color': Colors.yellow, 'command': 'YELLOW'},
+                  {'color': Colors.cyan.shade100, 'command': 'CYAN'},
+                  {'color': Colors.pink, 'command': 'PINK'},
+                  {'text': 'SMOOTH', 'command': 'SMOOTH'},
+                ]),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPowerButtons() {
+  Widget _buildControlRow(List<Map<String, dynamic>> controls) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: [
-        _buildIconButton(Icons.power_settings_new, Colors.greenAccent, 'power_on'),
-        _buildIconButton(Icons.power_off, Colors.redAccent, 'power_off'),
-      ],
+      children: controls.map((control) {
+        return _buildControlButton(
+          icon: control['icon'] as IconData,
+          command: control['command'] as String,
+          color: control['color'] as Color? ?? Colors.white,
+        );
+      }).toList(),
     );
   }
 
-  Widget _buildColorGrid() {
-    final List<Map<String, dynamic>> colors = [
-      {'color': Colors.red, 'key': 'red'},
-      {'color': Colors.green, 'key': 'green'},
-      {'color': Colors.blue, 'key': 'blue'},
-      {'color': Colors.white, 'key': 'white'},
-      {'color': Colors.orange, 'key': 'orange'},
-      {'color': Colors.lightGreen, 'key': 'light_green'},
-      {'color': Colors.lightBlue, 'key': 'light_blue'},
-      {'color': Colors.amber, 'key': 'amber'},
-      {'color': Colors.cyan, 'key': 'cyan'},
-      {'color': Colors.purple, 'key': 'purple'},
-      {'color': Colors.yellow, 'key': 'yellow'},
-      {'color': Colors.pink, 'key': 'pink'},
-    ];
+  Widget _buildColorRow(List<Map<String, dynamic>> buttons) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: buttons.map((button) {
+        if (button.containsKey('text')) {
+          return _buildEffectButton(
+            text: button['text'] as String,
+            command: button['command'] as String,
+          );
+        } else {
+          return _buildColorButton(
+            color: button['color'] as Color,
+            command: button['command'] as String,
+          );
+        }
+      }).toList(),
+    );
+  }
 
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 15,
-        crossAxisSpacing: 15,
+  Widget _buildControlButton({
+    required IconData icon,
+    required String command,
+    required Color color,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _sendIrCommand(command),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey.shade900,
+            border: Border.all(color: Colors.grey.shade800, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+              const BoxShadow(
+                color: Colors.black,
+                spreadRadius: -1,
+                blurRadius: 1,
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.grey.shade800,
+                Colors.grey.shade900,
+              ],
+            ),
+          ),
+          child: Icon(icon, color: color),
+        ),
       ),
-      itemCount: colors.length,
-      itemBuilder: (context, index) {
-        final color = colors[index]['color'] as Color;
-        final key = colors[index]['key'] as String;
-        return _buildColorButton(color, key);
-      },
     );
   }
 
-  Widget _buildBrightnessSlider() {
-    return _buildSlider('Brightness', Icons.wb_sunny, 'brightness_down', 'brightness_up');
+  Widget _buildColorButton({
+    required Color color,
+    required String command,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _sendIrCommand(command),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+            border: Border.all(color: Colors.grey.shade800, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+              const BoxShadow(
+                color: Colors.black,
+                spreadRadius: -1,
+                blurRadius: 1,
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.9),
+                color,
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
-  Widget _buildSpeedSlider() {
-    return _buildSlider('Speed', Icons.speed, 'smooth', 'flash'); // Using smooth/flash as placeholders
-  }
-
-  Widget _buildSlider(String label, IconData icon, String keyDecrease, String keyIncrease) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: GoogleFonts.roboto(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            _buildSmallIconButton(icon, keyDecrease),
-            const Expanded(
-              child: Slider(
-                value: 0.5, // Dummy value
-                onChanged: null, // Disabled
-                activeColor: Colors.purpleAccent,
-                inactiveColor: Colors.grey,
+  Widget _buildEffectButton({
+    required String text,
+    required String command,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => _sendIrCommand(command),
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey.shade900,
+            border: Border.all(color: Colors.grey.shade800, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.5),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+              const BoxShadow(
+                color: Colors.black,
+                spreadRadius: -1,
+                blurRadius: 1,
+              ),
+            ],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.grey.shade800,
+                Colors.grey.shade900,
+              ],
+            ),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            _buildSmallIconButton(icon, keyIncrease, increment: true),
-          ],
+          ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildEffectButtons() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildTextButton('Flash', 'flash'),
-        _buildTextButton('Strobe', 'strobe'),
-        _buildTextButton('Fade', 'fade'),
-        _buildTextButton('Smooth', 'smooth'),
-      ],
-    );
-  }
-
-  Widget _buildIconButton(IconData icon, Color color, String key) {
-    return InkWell(
-      onTap: () => _sendIrCommand(key),
-      borderRadius: BorderRadius.circular(50),
-      child: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.black.withAlpha(50),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.deepPurple.shade900.withAlpha(128),
-                spreadRadius: 2,
-                blurRadius: 10,
-                offset: const Offset(5, 5)),
-            BoxShadow(
-                color: Colors.blue.shade900.withAlpha(128),
-                spreadRadius: 2,
-                blurRadius: 10,
-                offset: const Offset(-5, -5)),
-          ],
-        ),
-        child: Icon(icon, color: color, size: 35),
-      ),
-    );
-  }
-
-  Widget _buildSmallIconButton(IconData icon, String key, {bool increment = false}) {
-    return InkWell(
-      onTap: () => _sendIrCommand(key),
-      borderRadius: BorderRadius.circular(30),
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: Colors.black.withAlpha(50),
-        ),
-        child: Icon(increment ? Icons.add : Icons.remove, color: Colors.white, size: 20),
-      ),
-    );
-  }
-
-  Widget _buildColorButton(Color color, String key) {
-    return InkWell(
-      onTap: () => _sendIrCommand(key),
-      borderRadius: BorderRadius.circular(15),
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(128),
-              spreadRadius: 1,
-              blurRadius: 8,
-              offset: const Offset(4, 4),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTextButton(String label, String key) {
-    return InkWell(
-      onTap: () => _sendIrCommand(key),
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.black.withAlpha(50),
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-             BoxShadow(
-                color: Colors.deepPurple.shade900.withAlpha(128),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(3, 3)),
-             BoxShadow(
-                color: Colors.blue.shade900.withAlpha(128),
-                spreadRadius: 1,
-                blurRadius: 5,
-                offset: const Offset(-3, -3)),
-          ],
-        ),
-        child: Text(label, style: GoogleFonts.roboto(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
       ),
     );
   }
