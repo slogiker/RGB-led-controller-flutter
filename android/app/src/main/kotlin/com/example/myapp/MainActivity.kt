@@ -30,9 +30,16 @@ class MainActivity: FlutterActivity() {
             Log.w(TAG, "⚠️  Android SDK version too old (${Build.VERSION.SDK_INT}), IR may not work")
         }
 
-       MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
-                "transmitIR" -> handleTransmitIR(call.arguments as Map<String, String>, result)
+                "transmitIR" -> {
+                    val args = call.arguments as? Map<*, *>
+                    if (args != null) {
+                        handleTransmitIR(args as Map<String, String>, result)
+                    } else {
+                        result.error("INVALID_ARGS", "Arguments must be a map", null)
+                    }
+                }
                 "hasIrBlaster" -> handleHasIrBlaster(result)
                 "getIrBlasterInfo" -> handleGetIrBlasterInfo(result)
                 else -> result.notImplemented()
@@ -42,8 +49,8 @@ class MainActivity: FlutterActivity() {
 
     /// Handle IR transmission request
     private fun handleTransmitIR(args: Map<String, String>, result: MethodChannel.Result) {
-        val hexCode = args["code"] as? String
-        val command = args["command"] as? String ?: "UNKNOWN"
+        val hexCode = args["code"]
+        val command = args["command"] ?: "UNKNOWN"
 
         Log.i(TAG, "📤 IR Transmit Request - Command: $command, Code: $hexCode")
 
@@ -204,4 +211,3 @@ class MainActivity: FlutterActivity() {
         }
     }
 }
-
