@@ -1,8 +1,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- IR Blaster Permissions - Required for transmitting IR commands to LED controller -->
+    <!-- This permission allows the app to transmit infrared signals -->
     <uses-permission android:name="android.permission.TRANSMIT_IR" />
-    <uses-feature android:name="android.hardware.consumerir" />
+    
+    <!-- Optional feature declaration - device should have IR, but app can work without it -->
+    <!-- Setting required="false" allows the app to be installed on devices without IR blaster -->
+    <uses-feature 
+        android:name="android.hardware.consumerir" 
+        android:required="false" />
+    
     <application
-        android:label="myapp"
+        android:label="RGB LED Controller"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,9 +1,19 @@
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:async';
 
+/// IR Service for transmitting infrared commands to LED controller
+/// Supports all Android devices with IR blaster capability
+/// Tested on: Xiaomi and other IR-equipped devices
 class IrService {
   static const MethodChannel _channel = MethodChannel('ir_service');
+  
+  // Debounce mechanism to prevent command spam
+  static Timer? _debounceTimer;
+  static DateTime? _lastCommandTime;
+  static const Duration _minCommandInterval = Duration(milliseconds: 100);
 
-  // IR codes for each function
+  // IR codes for each command (NEC protocol format)
   static const Map<String, String> irCodes = {
     'BRIGHT_UP': '0xF7C03F',
     'BRIGHT_DOWN': '0xF7E01F',
@@ -28,16 +38,110 @@ class IrService {
     'SMOOTH': '0xF7E817'
   };
 
-  static Future<void> transmitIR(String command) async {
+  /// Transmit IR command with debouncing and error handling
+  /// 
+  /// [command] - The command name (must exist in irCodes map)
+  /// Returns true if command was sent, false if rejected (debounce)
+  static Future<bool> transmitIR(String command) async {
     try {
-      final code = irCodes[command];
-      if (code != null) {
-        await _channel.invokeMethod('transmitIR', {'code': code});
-        // Provide haptic feedback on successful transmission
-        HapticFeedback.mediumImpact();
+      // Validate command
+      if (!irCodes.containsKey(command)) {
+        debugPrintError('❌ Invalid IR command: $command');
+        return false;
       }
+
+      // Debounce check - prevent command spam
+      final now = DateTime.now();
+      if (_lastCommandTime != null &&
+          now.difference(_lastCommandTime!).inMilliseconds < _minCommandInterval.inMilliseconds) {
+        debugPrintWarning('⏱️  Command rejected (debounced): $command');
+        return false;
+      }
+
+      _lastCommandTime = now;
+      final code = irCodes[command]!;
+
+      debugPrintInfo('📤 Transmitting IR: $command ($code)');
+
+      // Transmit via native method
+      await _channel.invokeMethod('transmitIR', {
+        'code': code,
+        'command': command,
+      });
+
+      // Provide haptic feedback
+      await HapticFeedback.mediumImpact();
+      debugPrintSuccess('✅ IR transmitted successfully: $command');
+
+      return true;
+    } on PlatformException catch (e) {
+      debugPrintError('❌ Platform Error: ${e.code} - ${e.message}');
+      return false;
     } catch (e) {
-      print('Error transmitting IR code: $e');
+      debugPrintError('❌ Error transmitting IR code: $e');
+      return false;
     }
   }
+
+  /// Check if device has IR blaster capability
+  static Future<bool> hasIrBlaster() async {
+    try {
+      final result = await _channel.invokeMethod<bool>('hasIrBlaster') ?? false;
+      return result;
+    } catch (e) {
+      debugPrintWarning('⚠️  Could not determine IR blaster capability: $e');
+      return false;
+    }
+  }
+
+  /// Get IR blaster info (device manufacturer, model, etc.)
+  static Future<Map<String, dynamic>> getIrBlasterInfo() async {
+    try {
+      final result = await _channel.invokeMethod<Map>('getIrBlasterInfo');
+      return Map<String, dynamic>.from(result ?? {});
+    } catch (e) {
+      debugPrintWarning('⚠️  Could not get IR blaster info: $e');
+      return {};
+    }
+  }
+
+  /// Test IR transmission (for emulator testing)
+  static Future<void> testIR(String command) async {
+    try {
+      if (!irCodes.containsKey(command)) {
+        debugPrintError('❌ Invalid test command: $command');
+        return;
+      }
+
+      debugPrintInfo('🧪 Testing IR command: $command');
+      await transmitIR(command);
+      debugPrintSuccess('✅ Test IR command completed: $command');
+    } catch (e) {
+      debugPrintError('❌ Test IR failed: $e');
+    }
+  }
+
+  /// Cancel any pending debounce timers
+  static void dispose() {
+    _debounceTimer?.cancel();
+    _debounceTimer = null;
+  }
 }
+
+/// Debug print helpers for better visibility
+void debugPrintInfo(String message) {
+  debugPrint('ℹ️  $message');
+}
+
+void debugPrintSuccess(String message) {
+  debugPrint('✅ $message');
+}
+
+void debugPrintWarning(String message) {
+  debugPrint('⚠️  $message');
+}
+
+void debugPrintError(String message) {
+  debugPrint('❌ $message');
+}
+
