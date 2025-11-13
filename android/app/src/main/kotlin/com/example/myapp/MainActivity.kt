@@ -137,16 +137,6 @@ class MainActivity: FlutterActivity() {
                 false
             }
 
-            // Get max carrier frequency ranges if available
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                try {
-                    val ranges = irManager?.carrierFrequencies
-                    info["carrier_frequencies"] = "${ranges?.minFrequency}-${ranges?.maxFrequency}Hz"
-                } catch (e: Exception) {
-                    Log.w(TAG, "Could not get carrier frequency ranges: ${e.message}")
-                }
-            }
-
             Log.i(TAG, "📱 Device Info: $info")
             result.success(info)
         } catch (e: Exception) {

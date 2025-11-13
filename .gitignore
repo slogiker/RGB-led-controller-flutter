@@ -3,6 +3,8 @@
 *.log
 *.pyc
 *.swp
+*.swo
+*~
 .DS_Store
 .atom/
 .build/
@@ -12,26 +14,28 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# IDE and Editor files
 *.iml
 *.ipr
 *.iws
 .idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+.vscode/
+*.code-workspace
+*.sublime-project
+*.sublime-workspace
 
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
+.flutter-plugins
 .pub-cache/
 .pub/
 /build/
 /coverage/
+*.g.dart
+*.freezed.dart
 
 # Symbolication related
 app.*.symbols
@@ -39,7 +43,123 @@ app.*.symbols
 # Obfuscation related
 app.*.map.json
 
-# Android Studio will place build artifacts here
+# Android specific
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.gradle/
+/android/captures/
+/android/local.properties
+/android/app/google-services.json
+/android/key.properties
+/android/**/*.jks
+/android/**/*.keystore
+*.apk
+*.ap_
+*.aab
+*.dex
+# Keep gradle wrapper files - they are needed for builds
+!android/gradlew
+!android/gradlew.bat
+!android/gradle/wrapper/gradle-wrapper.jar
+!android/gradle/wrapper/gradle-wrapper.properties
+
+# iOS specific (if needed later)
+/ios/Pods/
+/ios/.symlinks/
+/ios/Flutter/Flutter.framework
+/ios/Flutter/Flutter.podspec
+/ios/Flutter/Generated.xcconfig
+/ios/Flutter/app.flx
+/ios/Flutter/app.zip
+/ios/Flutter/flutter_assets/
+/ios/Flutter/flutter_export_environment.sh
+/ios/ServiceDefinitions.json
+/ios/Runner/GeneratedPluginRegistrant.*
+
+# Web specific
+/web/**/*.js
+/web/**/*.js_
+/web/**/*.js.deps
+/web/**/*.js.map
+
+# Build outputs
+*.apk
+*.app
+*.ipa
+*.app.dSYM.zip
+*.app.dSYM
+
+# Gradle files (keep gradle wrapper but ignore build artifacts)
+/android/.gradle/
+/android/build/
+/android/app/build/
+**/build/
+**/.gradle/
+
+# Local configuration files
+local.properties
+**/local.properties
+.env
+.env.local
+*.local
+
+# Android keystore and signing
+*.keystore
+*.jks
+key.properties
+keystore.properties
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Firebase (keep google-services.json template, ignore actual config)
+# Uncomment if you want to ignore actual firebase config
+# /android/app/google-services.json
+
+# Testing
+/test_driver/screenshots/
+/test_driver/reports/
+coverage/
+
+# Documentation build artifacts (keep source, ignore generated)
+/doc/api/
+/docs/_build/
+
+# Package files
+*.tar.gz
+*.zip
+
+# Backup files
+*.backup
+*_backup.*
+*.old
+*.new
+*.orig
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
