@@ -168,7 +168,7 @@ class CustomEffectButton extends StatelessWidget {
   }
 }
 
-/// Custom power button widget with toggle state
+/// Custom power button widget with toggle state - NOW THEME AWARE
 class CustomPowerButton extends StatelessWidget {
   final bool isPowerOn;
   final String? lastDebugMessage;
@@ -183,6 +183,14 @@ class CustomPowerButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get theme from context
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    // Set colors based on theme
+    final offColor = isDarkMode ? Colors.grey.shade900 : Colors.grey.shade400;
+    final offBorderColor = isDarkMode ? Colors.grey.shade800 : Colors.grey.shade500;
+    final offIconColor = isDarkMode ? Colors.red : Colors.red.shade700;
+
     return Column(
       children: [
         GestureDetector(
@@ -192,9 +200,9 @@ class CustomPowerButton extends StatelessWidget {
             height: AppConstants.powerButtonSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isPowerOn ? Colors.green : Colors.grey.shade900,
+              color: isPowerOn ? Colors.green : offColor,
               border: Border.all(
-                color: isPowerOn ? Colors.green.shade400 : Colors.grey.shade800,
+                color: isPowerOn ? Colors.green.shade400 : offBorderColor,
                 width: 2,
               ),
               boxShadow: [ThemeHelper.getPowerButtonShadow(isPowerOn)],
@@ -203,13 +211,13 @@ class CustomPowerButton extends StatelessWidget {
                 end: Alignment.bottomRight,
                 colors: isPowerOn
                     ? [Colors.green.shade600, Colors.green]
-                    : [Colors.grey.shade800, Colors.grey.shade900],
+                    : [offColor.withOpacity(0.8), offColor],
               ),
             ),
             child: Icon(
               Icons.power_settings_new,
               size: 48,
-              color: isPowerOn ? Colors.white : Colors.red,
+              color: isPowerOn ? Colors.white : offIconColor,
             ),
           ),
         ),
@@ -219,7 +227,7 @@ class CustomPowerButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: isPowerOn ? Colors.green : Colors.red,
+            color: isPowerOn ? Colors.green : offIconColor,
           ),
         ),
         if (lastDebugMessage != null)

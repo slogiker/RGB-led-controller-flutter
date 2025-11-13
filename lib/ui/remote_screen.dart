@@ -36,24 +36,30 @@ class _RemoteScreenState extends State<RemoteScreen> {
 
   /// Send IR command with visual and debug feedback
   void _sendIrCommand(String command) {
-    debugPrint('🔴 IR Command Sent: $command (Toggle: $_isPowerOn)');
-
-    setState(() {
-      _isIrActive = true;
-      _lastDebugMessage = command;
-    });
-
-    IrService.transmitIR(command);
-
-    // Deactivate IR light after timeout
-    Future.delayed(AppConstants.irIndicatorDuration, () {
-      if (mounted) {
-        setState(() {
-          _isIrActive = false;
-        });
-      }
-    });
+  // Don't send if power is OFF (except for ON command)
+  if (!_isPowerOn && command != 'ON') {
+    debugPrint('🔴 IR Command Blocked: $_isPowerOn is OFF, command: $command');
+    return; // Exit early, don't send
   }
+
+  debugPrint('🔴 IR Command Sent: $command (Toggle: $_isPowerOn)');
+
+  setState(() {
+    _isIrActive = true;
+    _lastDebugMessage = command;
+  });
+
+  IrService.transmitIR(command);
+
+  // Deactivate IR light after timeout
+  Future.delayed(AppConstants.irIndicatorDuration, () {
+    if (mounted) {
+      setState(() {
+        _isIrActive = false;
+      });
+    }
+  });
+}
 
   /// Handle power button toggle
   void _handlePowerToggle() {
