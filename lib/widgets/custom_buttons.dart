@@ -25,13 +25,13 @@ class CustomControlButton extends StatelessWidget {
   final bool isDarkMode;
 
   const CustomControlButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.command,
     required this.iconColor,
     required this.onPressed,
     required this.isDarkMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -73,12 +73,12 @@ class CustomColorButton extends StatelessWidget {
   final bool isDarkMode;
 
   const CustomColorButton({
-    Key? key,
+    super.key,
     required this.buttonColor,
     required this.command,
     required this.onPressed,
     required this.isDarkMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,12 +120,12 @@ class CustomEffectButton extends StatelessWidget {
   final bool isDarkMode;
 
   const CustomEffectButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.command,
     required this.onPressed,
     required this.isDarkMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -175,11 +175,11 @@ class CustomPowerButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   const CustomPowerButton({
-    Key? key,
+    super.key,
     required this.isPowerOn,
     required this.lastDebugMessage,
     required this.onPressed,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -253,10 +253,10 @@ class CustomIrIndicator extends StatelessWidget {
   final bool isDarkMode;
 
   const CustomIrIndicator({
-    Key? key,
+    super.key,
     required this.isActive,
     required this.isDarkMode,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
